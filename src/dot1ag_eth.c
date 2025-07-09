@@ -985,40 +985,95 @@ int cfm_send_slr(char *ifname, uint8_t *slm_frame, int size, uint8_t *local_mac,
   return 0;
 }
 
-static uint32_t rx_count_map[MAX_TESTS]; // simple fixed‐size map for demo
+static session_t *sessions = NULL;
 
-/* Helper to format a MAC address into a static buffer */
-const char *fmt_mac(const uint8_t mac[6]) {
-  static char buf[18];
-  snprintf(buf, sizeof(buf), "%02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1],
-           mac[2], mac[3], mac[4], mac[5]);
-  return buf;
+//------------------------------------------------------------------------------
+// Lookup-or-create session for (peer_mep, test_id)
+//------------------------------------------------------------------------------
+static session_t *get_session(uint16_t peer_mep, uint32_t test_id,
+                              int verbose) {
+  session_key_t key = {peer_mep, test_id};
+  session_t *s;
+
+  HASH_FIND(hh, sessions, &key, sizeof(key), s);
+  if (!s) {
+    s = malloc(sizeof(*s));
+    if (!s) {
+      syslog(LOG_ERR, "Failed to allocate memory for session: peer %u test %u",
+             peer_mep, test_id);
+      return NULL;
+    }
+    if (verbose) {
+      syslog(LOG_INFO, "Creating new session for peer_mep=%u, test_id=%u",
+             peer_mep, test_id);
+    }
+    s->key = key;
+    s->rx_count = 0;
+    s->last_seen = time(NULL);
+    HASH_ADD(hh, sessions, key, sizeof(key), s);
+  } else {
+    if (verbose) {
+      syslog(LOG_INFO, "Found existing session for peer_mep=%u, test_id=%u",
+             peer_mep, test_id);
+    }
+  }
+  return s;
+}
+
+static time_t last_eviction = 0;
+
+static void maybe_evict_stale_sessions(time_t max_age_sec, time_t interval_sec,
+                                       int verbose) {
+  time_t now = time(NULL);
+  if (now - last_eviction < interval_sec) {
+    return;
+  }
+  last_eviction = now;
+
+  session_t *s, *tmp;
+  HASH_ITER(hh, sessions, s, tmp) {
+    if (now - s->last_seen > max_age_sec) {
+      if (verbose) {
+        syslog(LOG_INFO, "Evicting stale session: peer_mep=%u, test_id=%u",
+               s->key.peer_mep, s->key.test_id);
+      }
+      HASH_DEL(sessions, s);
+      free(s);
+    }
+  }
 }
 
 void process_slm_frame(char *ifname, uint8_t *frame, int size,
                        uint8_t *local_mac, uint16_t local_mep_id, int verbose) {
   struct cfmhdr *hdr = CFMHDR(frame);
   uint8_t *base = (uint8_t *)hdr;
-  uint32_t test_id;
-  uint16_t idx;
-  uint32_t local_rx_count;
+
+  maybe_evict_stale_sessions(EVICT_MAX_AGE, EVICT_INTERVAL, verbose);
 
   if (verbose) {
     log_slm_frame(frame, size, CFM_SLM);
   }
 
-  /* 2) Extract the 4‐byte Test ID at offset 8 in the CFM header */
-  memcpy(&test_id, &base[8], sizeof(test_id));
-  test_id = ntohl(test_id);
+  uint16_t peer_mep_raw;
+  memcpy(&peer_mep_raw, &base[4], sizeof(peer_mep_raw));
+  uint16_t peer_mep = ntohs(peer_mep_raw);
 
-  /* 3) Map it into our small table (modulo for simplicity) */
-  idx = test_id % MAX_TESTS;
+  uint32_t test_id_raw;
+  memcpy(&test_id_raw, &base[8], sizeof(test_id_raw));
+  uint32_t test_id = ntohl(test_id_raw);
 
-  /* 4) Increment the counter for this Test ID */
-  rx_count_map[idx] += 1;
-  local_rx_count = rx_count_map[idx];
+  session_t *s = get_session(peer_mep, test_id, verbose);
+  if (!s) {
+    syslog(LOG_ERR,
+           "process_slm_frame: failed to create session for peer_mep=%u, "
+           "test_id=%u",
+           peer_mep, test_id);
+    return;
+  }
 
-  /* 5) Now send the SLR reply, passing the updated count */
-  cfm_send_slr(ifname, frame, size, local_mac, local_mep_id, local_rx_count,
+  s->rx_count += 1;
+  s->last_seen = time(NULL);
+
+  cfm_send_slr(ifname, frame, size, local_mac, local_mep_id, s->rx_count,
                verbose);
 }

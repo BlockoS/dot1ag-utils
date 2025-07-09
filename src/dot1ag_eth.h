@@ -26,6 +26,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "uthash.h"
+
 #include <pcap.h>
 
 #define SNAPLEN 65535 /* pcap snap length */
@@ -66,4 +68,20 @@ void print_ltr(uint8_t *buf);
 void process_slm_frame(char *ifname, uint8_t *frame, int size,
                        uint8_t *local_mac, uint16_t local_mep_id, int verbose);
 
-#define MAX_TESTS 256
+// how long to keep a session entry without activity (seconds)
+#define EVICT_MAX_AGE 300 // 5 minutes
+// how often to run the eviction logic (seconds)
+#define EVICT_INTERVAL 60 // 1 minute
+
+typedef struct {
+  uint16_t peer_mep;
+  uint32_t test_id;
+} session_key_t;
+
+// 2) Your session entry keeps that key verbatim
+typedef struct session {
+  session_key_t key; // composite key
+  uint32_t rx_count;
+  time_t last_seen;
+  UT_hash_handle hh;
+} session_t;
