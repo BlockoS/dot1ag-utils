@@ -65,31 +65,32 @@ int get_local_mac(char *dev, uint8_t *ea) {
   struct sockaddr_dl *sdl;
   caddr_t addr;
   int i;
+  int ret = -1;
 
   if (getifaddrs(&ifaddr) == -1) {
     perror("getifaddrs");
-    exit(EXIT_FAILURE);
+  } else {
+    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+      if (ifa->ifa_addr == NULL) {
+        /* unaunnamed */
+      } else if (strncmp(ifa->ifa_name, dev, ETHER_ADDR_LEN) != 0) {
+        /* not the interface we are looking for */
+      } else {
+        sdl = (struct sockaddr_dl *)ifa->ifa_addr;
+        if (sdl->sdl_family != AF_LINK) {
+          /* skip if this not a data link address */
+        } else {
+          addr = LLADDR(sdl);
+          for (i = 0; i < ETHER_ADDR_LEN; i++) {
+            ea[i] = addr[i];
+          }
+          break;
+        }
+      }
+    }
+    freeifaddrs(ifaddr);
   }
-  for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
-    if (ifa->ifa_addr == NULL) {
-      continue;
-    }
-    if (strncmp(ifa->ifa_name, dev, sizeof(dev)) != 0) {
-      continue; /* not the interface we are looking for */
-    }
-    sdl = (struct sockaddr_dl *)ifa->ifa_addr;
-    if (sdl->sdl_family != AF_LINK) {
-      continue; /* skip if this not a data link address */
-    }
-    addr = LLADDR(sdl);
-    for (i = 0; i < ETHER_ADDR_LEN; i++) {
-      ea[i] = addr[i];
-    }
-    return 0;
-  }
-  freeifaddrs(ifaddr);
-  /* interface not found, return -1 */
-  return -1;
+  return ret;
 }
 
 int send_packet(char *ifname, uint8_t *buf, int size) {
