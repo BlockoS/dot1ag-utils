@@ -27,4 +27,15 @@ AC_TYPE_UINT8_T
 # Checks for library functions.
 AC_CHECK_FUNCS([gettimeofday memset select socket])
 
+AC_CHECK_LIB([pcap],[pcap_create], [], [
+	AC_MSG_ERROR([Unable to find libpcap])
+])
+AC_CHECK_HEADER([pcap/pcap.h], [], [
+	AC_MSG_ERROR([Unable to find pcap/pcap.h])
+])
+
+AC_CHECK_HEADER([uthash.h], [], [
+	AC_MSG_ERROR([Unable to find uthash.h])
+])
+
 AC_OUTPUT
