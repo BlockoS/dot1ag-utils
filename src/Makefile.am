@@ -1,4 +1,4 @@
-AM_CFLAGS = -Wall -Werror -ggdb
+AM_CFLAGS = -Wall -Wextra
 
 bin_PROGRAMS = ethping ethtrace dot1agd dot1ag_ccd
 

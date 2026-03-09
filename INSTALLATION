@@ -3,7 +3,7 @@ Compiling can be done without root privileges.
 Linux requirements
 ------------------
 The pcap library and header files are needed. If not present, install them:
-$ sudo apt-get install libpcap-dev
+$ sudo apt-get install libpcap-dev uthash-dev
 
 STEP 1
 ------
@@ -14,10 +14,15 @@ the software in it.
 
 STEP 2
 ------
+Generate build scripts:
+$ sh autogen.sh
+
+STEP 3
+------
 Run the configure script:
 $ sh configure
 
-STEP 3
+STEP 4
 ------
 Run make:
 $ make
