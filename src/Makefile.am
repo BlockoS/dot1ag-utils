@@ -1,5 +1,4 @@
-AM_CFLAGS = -Wall -Wextra
-
+AM_CFLAGS = -Wall -Wextra -Werror
 bin_PROGRAMS = ethping ethtrace dot1agd dot1ag_ccd
 
 ethping_SOURCES = \

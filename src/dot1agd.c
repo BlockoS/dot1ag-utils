@@ -48,7 +48,7 @@ pcap_t *handle;
 
 static void usage(void);
 
-static void timeout_handler(int sig) {
+static void timeout_handler(int sig __attribute__((unused))) {
   pcap_breakloop(handle); /* XXX is this needed? */
 }
 

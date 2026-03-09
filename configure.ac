@@ -1,6 +1,6 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
-
+AC_PREREQ([2.70])
 AC_INIT([dot1ag-utils], [1.0.1], [rvdp@sara.nl])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign no-dependencies])
 AC_CONFIG_HEADERS([config.h])
@@ -13,8 +13,6 @@ AC_CONFIG_FILES([
 
 # Checks for programs.
 AC_PROG_CC
-
-# Checks for libraries.
 
 # Checks for header files.
 AC_CHECK_HEADERS([net/bpf.h net/if_ether.h net/ethernet.h])

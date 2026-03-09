@@ -364,7 +364,7 @@ void logDM_packet(uint8_t *dm_frame, int size, int opcode) {
   }
 }
 
-void process_dmm_frame(char *ifname, uint8_t md_level, uint16_t mep_id,
+void process_dmm_frame(char *ifname, uint8_t md_level, uint16_t mep_id __attribute__((unused)),
                        uint8_t *dmm_frame, int size, uint8_t *local_mac,
                        struct timeval capture_tv, int verbose) {
 
@@ -993,10 +993,12 @@ static session_t *sessions = NULL;
 //------------------------------------------------------------------------------
 static session_t *get_session(uint16_t peer_mep, uint32_t test_id,
                               int verbose) {
-  session_key_t key = {peer_mep, test_id};
+  session_key_t probe = {0};
   session_t *s;
 
-  HASH_FIND(hh, sessions, &key, sizeof(key), s);
+  probe = (session_key_t){peer_mep, test_id};
+
+  HASH_FIND(hh, sessions, &probe, sizeof(session_key_t), s);
   if (!s) {
     s = malloc(sizeof(*s));
     if (!s) {
@@ -1008,10 +1010,10 @@ static session_t *get_session(uint16_t peer_mep, uint32_t test_id,
       syslog(LOG_INFO, "Creating new session for peer_mep=%u, test_id=%u",
              peer_mep, test_id);
     }
-    s->key = key;
+    s->key = probe;
     s->rx_count = 0;
     s->last_seen = time(NULL);
-    HASH_ADD(hh, sessions, key, sizeof(key), s);
+    HASH_ADD(hh, sessions, key, sizeof(session_key_t), s);
   } else {
     if (verbose) {
       syslog(LOG_INFO, "Found existing session for peer_mep=%u, test_id=%u",

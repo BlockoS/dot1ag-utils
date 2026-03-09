@@ -58,7 +58,7 @@ usage();
 
 
 static void
-timeout_handler(int sig) {
+timeout_handler(int sig __attribute__((unused))) {
 	next_lbm = 1;
 	count--;
 	nextLBMtransID++;

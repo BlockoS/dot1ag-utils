@@ -139,7 +139,7 @@ static void cfm_ccm_receiver(char *ifname, struct pcap_pkthdr *pcap_hdr,
 static void ccmlog(int mepid, enum LOG_ACTION action);
 
 /* log status of all MEPs on HUP signal */
-static void log_mep_info(int sig) { ccmlog(0, INFO); }
+static void log_mep_info(int sig __attribute__((unused))) { ccmlog(0, INFO); }
 
 struct rMEP rMEPdb[MAX_MEPID + 1];
 int CCMinterval = -1;
@@ -500,7 +500,8 @@ static int equalstrings(char *s1, char *s2) {
   return 1;
 }
 
-static void cfm_ccm_receiver(char *ifname, struct pcap_pkthdr *pcap_hdr,
+static void cfm_ccm_receiver(char *ifname __attribute__((unused)),
+                             struct pcap_pkthdr *pcap_hdr __attribute__((unused)),
                              const u_char *buf, uint16_t vlan,
                              uint8_t *local_mac, int verbose) {
   struct cfmencap *encap;

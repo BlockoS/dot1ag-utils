@@ -54,7 +54,7 @@ static int got_reply = 0;
 static pcap_t *handle;
 
 static void
-timeout_handler(int sig) {
+timeout_handler(int sig __attribute__((unused))) {
 	next_ltm = 1;
 	pcap_breakloop(handle);   /* XXX is this needed? */
 }

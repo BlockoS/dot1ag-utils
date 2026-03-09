@@ -250,8 +250,8 @@ cfm_addhdr(uint8_t md_level, uint8_t flags, uint8_t first_tlv,
  * Return 1 if the frame in buf matches the expected LBR, return 0 otherwise
  */
 int
-cfm_matchlbr(uint8_t *buf, uint8_t *dst, uint8_t *src, uint16_t vlan,
-		uint8_t md_level, uint32_t trans_id) {
+cfm_matchlbr(uint8_t *buf, uint8_t *dst, uint8_t *src, uint16_t vlan __attribute__((unused)),
+		uint8_t md_level __attribute__((unused)), uint32_t trans_id __attribute__((unused))) {
 	struct cfmencap *cfmencap;
 	struct cfmhdr *cfmhdr;
 	int i;
@@ -353,8 +353,8 @@ cfm_addltr(uint32_t transID, uint8_t ttl, uint8_t action, uint8_t *buf) {
  * Return 1 if the frame in buf matches the expected LTR, return 0 otherwise
  */
 int
-cfm_matchltr(uint8_t *buf, uint8_t *dst, uint16_t vlan, uint8_t md_level,
-					uint32_t trans_id, int *hit_target) {
+cfm_matchltr(uint8_t *buf, uint8_t *dst, uint16_t vlan __attribute__((unused)),
+			 uint8_t md_level __attribute__((unused)), uint32_t trans_id, int *hit_target) {
 	struct cfmencap *encap;
 	struct cfmhdr *cfmhdr;
 	struct cfm_ltr *ltr;
